@@ -1,0 +1,87 @@
+.header {
+	display: flex;
+	/*! padding: 5vw; */
+	/*! width: 100%; */
+	flex-direction: row;
+	align-items: center;
+}
+
+.header h1 {
+	min-width: fit-content;
+	text-align: center;
+	padding-inline: 50px;
+	color: white;
+}
+
+.unicornpuke {
+	height: 2px;
+	flex: 1;
+	animation: 3s linear 0s infinite normal none running bgloop;
+  background: repeating-linear-gradient(90deg, hsl(0,100%,50%), hsl(30,100%,50%), hsl(60,100%,50%), hsl(90,100%,50%), hsl(120,100%,50%), hsl(150,100%,50%), hsl(180,100%,50%), hsl(210,100%,50%), hsl(240,100%,50%), hsl(270,100%,50%), hsl(300,100%,50%), hsl(330,100%,50%), hsl(360,100%,50%) var(--rgbwidth)) center/var(--rgbwidth);
+}
+
+body {
+	background: #222;
+}
+
+@keyframes bgloop {
+ 0% {
+  background-position:0% 50%;
+ }
+ 100% {
+  background-position:var(--rgbwidth) 50%;
+ }
+}
+
+#file-browser {
+  display:flex;
+}
+
+.file-list {
+  width: 25vw;
+  height: 25em;
+  border: solid 3px white;
+  border-radius: var(--border-radius);
+  --border-radius: 1em;
+  font-family: monospace;
+  margin: 20px;
+  font-size: 2vh;
+}
+.fb-header {
+  color: powderblue;
+  padding-left: calc(var(--border-radius)/4);
+  border-bottom: inherit;
+}
+.folder::before {
+  background-image: url("folder.png");
+  /*! image-rendering: pixelated; */
+}
+.folder::after{
+  /*! content:"/" */
+}
+.file::before {
+  background-image: url("movie.png");
+  image-rendering: pixelated;
+}
+.folder::before, .file::before {
+  height: 1rem;
+  display: inline-block;
+  width: 1rem;
+  content: "";
+  background-size: 100%;
+  background-repeat: no-repeat;
+  background-position: bottom;
+}
+.file-list a {
+  color: #f9feff;
+  width: calc(100% - 20px);
+  display: inline-block;
+  /*! cursor: pointer; */
+  margin: 10px;
+  box-sizing: border-box;
+}
+.file-list a:hover {
+  /*! text-decoration: underline; */
+  border-bottom: solid 1px white;
+  /*! border-color: white; */
+}

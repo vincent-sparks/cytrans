@@ -1,0 +1,24 @@
+[package]
+name = "cytrans"
+version = "0.3.0"
+edition = "2021"
+
+[lib]
+crate-type=["lib"]
+
+[features]
+commands = []
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+fixedstr = { version = "0.3.0", git = "https://github.com/wallefan/fixedstr", features = ["serde"]}
+once_cell = "1.17.1"
+serde = { version = "1.0.158", features = ["derive"] }
+strum = { version = "0.24.1", features = ["derive"] }
+
+[profile.release]
+strip=true
+lto=true
+opt-level="z"
+panic="abort"
