@@ -77,12 +77,12 @@ fn build_language_string(language: &str, title: Option<&str>) -> String {
 
 fn snap_to_nearest(val: u16, legal: &[u16]) -> u16 {
     let mut last_difference = u16::MAX;
-    for (i,a) in legal.iter().enumerate() {
-        if *a > val {
+    for (i,a) in legal.iter().copied().enumerate() {
+        if a > val {
             if a - val > last_difference {
                 return legal[i-1];
             } else {
-                return *a;
+                return a;
             }
         }
         last_difference = val - a;

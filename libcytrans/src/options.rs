@@ -5,7 +5,7 @@ use serde::{Serialize, Serializer, ser::SerializeSeq};
 
 use std::fmt::*;
 
-#[derive(Debug, PartialEq, Clone, Copy, strum::EnumString, strum::EnumIter, strum::AsRefStr, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, strum::EnumString, strum::EnumIter, strum::AsRefStr, strum::IntoStaticStr, serde::Serialize, serde::Deserialize)]
 #[strum(serialize_all="snake_case")]
 pub enum VideoCodec {
     AV1, VP8, VP9,
@@ -33,7 +33,7 @@ impl Display for VideoCodec {
 }
 
 
-#[derive(Debug, PartialEq, Clone, Copy, strum::EnumString, strum::EnumIter, strum::AsRefStr, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, strum::EnumString, strum::EnumIter, strum::AsRefStr, strum::IntoStaticStr, serde::Serialize, serde::Deserialize)]
 #[strum(serialize_all="snake_case")]
 pub enum AudioCodec {
     AAC,

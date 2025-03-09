@@ -1,8 +1,8 @@
-use std::{ffi::OsString, path::PathBuf};
+use std::{ffi::OsString, fmt::Display, path::PathBuf, str::FromStr};
 
 use clap::Parser;
 use console_menu::{Menu, MenuOption, MenuProps};
-use cytrans::{codecs::get_capabilities, ffprobe::{ffprobe, Track, TrackType}, options::TranscodeArgs};
+use cytrans::{codecs::get_capabilities, ffprobe::{ffprobe, Track, TrackType}, options::{TrackOptions, TranscodeArgs, VideoCodec}};
 
 #[derive(clap::Parser)]
 #[command(version, about)]
@@ -69,6 +69,26 @@ fn main() {
             Some(video_tracks[*idx])
         },
     };
+    let mut video_tracks = Vec::new();
+    let mut audio_tracks = Vec::new();
+
+
+    if let Some(ref video) = video_track {
+        if let Some((codec, encoder)) = choose_encoder("Choose video encoder", cytrans::codecs::get_video_encoders(), Some(&video.codec)) {
+            video_tracks.push(TrackOptions {
+                track: video,
+                codec,
+                encoder: encoder.into(),
+                extra_ffmpeg_args: Vec::new(),
+                bitrate: None,
+            });
+        }
+    }
+
+    let mut title = ffprobe_result.title.clone().unwrap_or_else(|| todo!());
+    let extra_ffmpeg_args = Vec::new(); // TODO add a way to specify extra ffmpeg args
+    
+
 
     let mut main_menu = Menu::new(
         MainMenuAction::into_menu(),
@@ -77,10 +97,7 @@ fn main() {
             ..MenuProps::default()
         }
     );
-    let mut video_tracks = Vec::new();
-    let mut audio_tracks = Vec::new();
-    let mut title = ffprobe_result.title.clone().unwrap_or_else(|| todo!());
-    let extra_ffmpeg_args = Vec::new(); // TODO add a way to specify extra ffmpeg args
+
     loop {
         match main_menu.show() {
             Some(MainMenuAction::VideoTracks) => {
@@ -110,6 +127,30 @@ fn main() {
     };
 
     // TODO: implement invoking ffmpeg
+}
+
+fn choose_encoder<T: Copy + Display + FromStr + Into<&'static str>>(title: &str, choices: &'static [(T, Vec<String>)], origin_codec: Option<&str>) -> Option<(T, &'static str)> {
+    let mut v = Vec::new();
+    if let Some(origin_codec) = origin_codec {
+        if let Ok(codec) = T::from_str(origin_codec) {
+            v.push(MenuOption {label: format!("{} (copy)", codec), value: (codec, "copy")});
+        }
+    }
+    for (codec, encoders) in choices {
+        let codec = *codec;
+        if encoders.is_empty() {
+            v.push(MenuOption {label: codec.to_string(), value: (codec, codec.into())});
+        } else {
+            for encoder in encoders {
+                v.push(MenuOption {label: format!("{} ({})", codec, encoder), value: (codec, encoder.as_str())});
+            }
+        }
+    }
+    let mut menu = Menu::new(v, MenuProps {
+        title,
+        ..MenuProps::default()
+    });
+    menu.show().copied()
 }
 
 trait Menuable<'ff>: Sized {

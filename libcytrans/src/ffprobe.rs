@@ -1,10 +1,11 @@
+use std::ffi::OsStr;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use fixedstr::str4;
 use serde::{Serialize,Deserialize};
 
 #[derive(Debug)]
-#[derive(strum::EnumString, Serialize, Deserialize, Clone)]
+#[derive(strum::EnumString, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[strum(serialize_all="snake_case")]
 pub enum TrackType {
     Video,
@@ -21,6 +22,12 @@ pub struct Track {
     pub language: Option<str4>,
     pub title: Option<String>,
     pub channels: Option<u8>,
+}
+
+impl Track {
+    pub fn is_valid_subtitle_track(&self) -> bool {
+        self.kind == TrackType::Subtitle && !crate::codecs::BITMAP_SUBTITLE_CODECS.contains(&self.codec.as_str())
+    }
 }
 
 impl std::fmt::Display for Track {
@@ -40,8 +47,10 @@ impl std::fmt::Display for Track {
 pub struct FFprobeResult {
     pub tracks: Vec<Track>,
     pub title: Option<String>,
+    /// duration in seconds
     pub duration: f32,
-    pub bitrate: u64, // in kbps
+    /// bitrate in kbps of the entire file
+    pub bitrate: u64,
 }
 
 fn parse_ffmpeg_line<'a>(line: &'a str) -> (&'a str, impl Iterator<Item=(&'a str, &'a str)>) {
@@ -51,12 +60,9 @@ fn parse_ffmpeg_line<'a>(line: &'a str) -> (&'a str, impl Iterator<Item=(&'a str
 }
 
 //#[cfg(feature="commands")]
-pub fn ffprobe(filename: &Path) -> std::io::Result<FFprobeResult> {
-    filename.metadata()?; // to make sure we can read the path before invoking ffmpeg
-                          // you could remove this but it would make error messages less
-                          // informative
+pub fn ffprobe(filename: &impl AsRef<OsStr>) -> std::io::Result<FFprobeResult> {
     let res = Command::new("ffprobe")
-        .arg(filename.as_os_str())
+        .arg(filename.as_ref())
         .arg("-of").arg("compact")
         .arg("-hide_banner")
         .arg("-show_streams").arg("-show_format")

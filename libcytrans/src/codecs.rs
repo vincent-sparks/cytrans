@@ -49,13 +49,13 @@ pub fn get_encoder_names<T: AsRef<str>>(ffmpeg_output: &str, mut codec_names: Ve
     let lines = ffmpeg_output.lines();
 
     'a: for line in lines {
-        if line.as_bytes()[2] != 'E' as u8 {
+        if line.as_bytes()[2] != b'E' {
             // ffmpeg can't encode this codec
             continue;
         }
-        let line = line.get(8..).unwrap();
+        let line = &line[8..];
         let tab_idx = line.find(' ').unwrap();
-        let codec_name = line.get(0..tab_idx).unwrap();
+        let codec_name = &line[0..tab_idx];
         let idx = 'b: {
             for (i,name) in codec_names.iter().enumerate() {
                 if name.as_ref() == codec_name {
@@ -65,14 +65,15 @@ pub fn get_encoder_names<T: AsRef<str>>(ffmpeg_output: &str, mut codec_names: Ve
             continue 'a;
         };
         let codec = codec_names.swap_remove(idx);
-        let line = line.get(tab_idx..).unwrap();
+        let line = &line[tab_idx..];
         
         if let Some(idx) = line.find("(encoders: ") {
-            let line = line.get(idx+11..).unwrap();
-            let line = line.get(..line.find(')').unwrap()).unwrap();
+            let line = &line[idx+11..];
+            let line = &line[..line.find(')').unwrap()];
             let mut res = line.split(' ').collect::<Vec<_>>();
-            debug_assert!(res[res.len()-1]=="");
-            res.remove(res.len()-1);
+            if res[res.len()-1].is_empty() {
+                res.remove(res.len()-1);
+            }
             result.push((codec, res.iter().map(|x|x.to_string()).collect::<Vec<_>>()));
         } else {
             result.push((codec, vec![]));
@@ -99,14 +100,14 @@ pub fn get_encoder_names(typ: char) -> HashMap<String, Vec<String>> {
             // ffmpeg can't encode this codec, or it's not the type we're interested in
             continue;
         }
-        let line = line.get(8..).unwrap();
+        let line = &line[8..];
         let mut split = line.split_ascii_whitespace();
         let codec_name = split.next().unwrap().to_string();
         //let line = split.as_str();
         
         if let Some(idx) = line.find("(encoders: ") {
-            let line = line.get(idx+11..).unwrap();
-            let line = line.get(..line.find(')').unwrap()).unwrap();
+            let line = &line[idx+11..];
+            let line = &line[..line.find(')').unwrap()];
             let mut res = line.split(' ').collect::<Vec<_>>();
             debug_assert!(res[res.len()-1]=="");
             res.remove(res.len()-1);
