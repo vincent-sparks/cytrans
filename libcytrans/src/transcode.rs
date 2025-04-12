@@ -2,6 +2,7 @@ use crate::ffprobe::{FFprobeResult, Track, TrackType::*};
 use crate::options::*;
 use crate::codecs::BITMAP_SUBTITLE_CODECS;
 use crate::metadata::*;
+use std::ffi::OsStr;
 use std::path::Path;
 use std::process::Command;
 use fixedstr::str4;
@@ -38,13 +39,8 @@ impl VideoContainer {
     }
 
     pub fn find_av(vc: VideoCodec, ac: AudioCodec) -> Option<Self> {
-        for container in Self::iter() {
-            if container.get_acceptable_video_codecs().contains(&vc) &&
-               container.get_acceptable_audio_codecs().contains(&ac) {
-                   return Some(container);
-               }
-        }
-        None
+        Self::iter().find(|container| container.get_acceptable_video_codecs().contains(&vc) &&
+               container.get_acceptable_audio_codecs().contains(&ac))
     }
 
     pub fn find(codec: VideoCodec) -> Self {
@@ -279,13 +275,13 @@ pub fn get_defaults<'a>(ffprobe: &'a FFprobeResult, file: &Path) -> TranscodeArg
 
 
 
-pub fn build_ffmpeg_command(media_file: &Path,
+pub fn build_ffmpeg_command(media_file: &OsStr,
                             transcode_args: TranscodeArgs,
                             outputdir: &Path) -> (Command, MetadataManifest, bool) {
     let mut command = Command::new("ffmpeg");
     command.arg("-hide_banner");
     command.args(transcode_args.extra_ffmpeg_args);
-    command.arg("-i").arg(media_file.as_os_str());
+    command.arg("-i").arg(media_file);
 
     let mut video_out = Vec::new();
     let mut audio_out = Vec::new();
