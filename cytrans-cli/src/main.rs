@@ -1,5 +1,9 @@
 #![feature(never_type)]
 #![feature(iter_intersperse)]
+
+#[cfg(feature="jellyfin")]
+mod jellyfin;
+
 use std::{ffi::OsString, fmt::Display, os::unix::process::CommandExt as _, path::PathBuf, str::FromStr};
 
 use clap::Parser;
@@ -47,8 +51,34 @@ fn main() {
     if !args.output_directory.is_dir() {
         std::fs::create_dir(&args.output_directory).expect("Error creating output directory");
     }
+    let mut ffprobe_result = ffprobe(&args.input_path_or_url).expect("Error running ffprobe");
 
-    let ffprobe_result = ffprobe(&args.input_path_or_url).expect("Error running ffprobe");
+    #[cfg(feature="jellyfin")]
+    if let Some(jf_title) = jellyfin::get_jellyfin_title(&args.input_path_or_url) {
+        if let Some(ff_title) = &ffprobe_result.title {
+            let mut menu = console_menu::Menu::new(
+                vec![
+                    MenuOption {
+                        label: format!("ffmpeg title: {}", ff_title),
+                        value: false,
+                    },
+                    MenuOption {
+                        label: format!("jellyfin title: {}", jf_title),
+                        value: true,
+                    },
+                ],
+                MenuProps {
+                    title: "Choose a title",
+                    ..MenuProps::default()
+                }
+            );
+            if *menu.show().expect("pick a title!") {
+                ffprobe_result.title = Some(jf_title);
+            }
+        } else {
+            ffprobe_result.title = Some(jf_title);
+        }
+    }
 
     let video_tracks = ffprobe_result.tracks.iter().filter(|track| track.kind == TrackType::Video).collect::<Vec<_>>();
 
@@ -61,7 +91,7 @@ fn main() {
                 .iter()
                 .enumerate()
                 .map(|(i, track)| MenuOption {
-                    label: format!("[{}] \"{}\" ({}, {}p)", track.index, track.title.as_deref().unwrap_or_default(), track.codec, track.scanline_count.unwrap_or(0)),
+                    label: format!("[{}] \"{}\" ({}, {}x{})", track.index, track.title.as_deref().unwrap_or_default(), track.codec, track.resolution_h.unwrap_or(0), track.resolution_v.unwrap_or(0)),
                     value: i,
                 })
                 .collect(),
