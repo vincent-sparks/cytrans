@@ -18,7 +18,8 @@ pub struct Track {
     pub index: u16,
     pub kind: TrackType,
     pub codec: String,
-    pub scanline_count: Option<u16>,
+    pub resolution_h: Option<u16>,
+    pub resolution_v: Option<u16>,
     pub language: Option<str4>,
     pub title: Option<String>,
     pub channels: Option<u8>,
@@ -38,6 +39,10 @@ impl std::fmt::Display for Track {
         }
         if let Some(lang) = &self.language {
             write!(fmt, " ({})", lang)?;
+        }
+        
+        if let (Some(w), Some(h)) = (self.resolution_h, self.resolution_v) {
+            write!(fmt, " {}x{}", w, h)?;
         }
         Ok(())
     }
@@ -67,7 +72,7 @@ pub fn ffprobe(filename: &impl AsRef<OsStr>) -> std::io::Result<FFprobeResult> {
         .arg("-hide_banner")
         .arg("-show_streams").arg("-show_format")
         .arg("-show_entries")
-        .arg("stream_tags=title,language:stream=index,codec_type,codec_name,channels,coded_height:stream_disposition=:format=duration,bit_rate:format_tags=title")
+        .arg("stream_tags=title,language:stream=index,codec_type,codec_name,channels,coded_width,coded_height:stream_disposition=:format=duration,bit_rate:format_tags=title")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?
@@ -99,7 +104,8 @@ pub fn ffprobe(filename: &impl AsRef<OsStr>) -> std::io::Result<FFprobeResult> {
             "stream" => {
                 let mut kind: Option<TrackType> = None;
                 let mut codec: Option<String> = None;
-                let mut scanline_count: Option<u16> = None;
+                let mut resolution_h: Option<u16> = None;
+                let mut resolution_v: Option<u16> = None;
                 let mut language: Option<str4> = None;
                 let mut title: Option<String> = None;
                 let mut index: Option<u16> = None;
@@ -115,7 +121,8 @@ pub fn ffprobe(filename: &impl AsRef<OsStr>) -> std::io::Result<FFprobeResult> {
                         "index" => index = Some(v.parse().unwrap()),
                         "channels" => channels = Some(v.parse().unwrap()),
                         "codec_name" => codec = Some(v.to_string()),
-                        "coded_height" => scanline_count = Some(v.parse().unwrap()),
+                        "coded_width" => resolution_h = Some(v.parse().unwrap()),
+                        "coded_height" => resolution_v = Some(v.parse().unwrap()),
                         "tag:language" => language = Some(v.into()),
                         "tag:title" => title = Some(v.to_string()),
                         x => {println!("ffprobe returned uncrecognized tag {}", x);},
@@ -124,7 +131,7 @@ pub fn ffprobe(filename: &impl AsRef<OsStr>) -> std::io::Result<FFprobeResult> {
                 let index = index.expect("no index");
                 let kind = kind.expect("no codec_type");
                 let codec = codec.expect("no codec_name");
-                tracks.push(Track {index, kind, codec, scanline_count, language, title, channels});
+                tracks.push(Track {index, kind, codec, resolution_h, resolution_v, language, title, channels});
             },
             _ => {},
         }

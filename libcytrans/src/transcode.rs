@@ -375,14 +375,17 @@ pub fn build_ffmpeg_command(media_file: &OsStr,
         command.args(video.extra_ffmpeg_args);
         command.arg(outputdir.join(&filename));
 
+        let resolution_h = video.track.resolution_h.unwrap_or(0);
+        let resolution_v = video.track.resolution_v.unwrap_or(0);
+
         video_out.push(VideoMetadata {
             filename,
             audio_is_silent: transcode_args.add_muxed_silence,
             container: video_container,
             video_codec: video.codec,
             audio_codec: muxed_audio_track.map(|x|x.codec),
-            resolution_h: 0,
-            resolution_v: 0,
+            resolution_h,
+            resolution_v,
         });
     }
 

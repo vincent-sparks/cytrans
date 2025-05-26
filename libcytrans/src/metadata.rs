@@ -153,4 +153,16 @@ impl MetadataManifest {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_snap_to_nearest() {
+        assert_eq!(snap_to_nearest(2,&[1,5]),1);
+        assert_eq!(snap_to_nearest(4,&[1,5]),5);
+        assert_eq!(snap_to_nearest(6,&[1,5]),5);
 
+        assert_eq!(snap_to_nearest(535,&CYTUBE_QUALITY_VALUES),540);
+        assert_eq!(snap_to_nearest(555,&CYTUBE_QUALITY_VALUES),540);
+    }
+}
