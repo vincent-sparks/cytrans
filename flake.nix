@@ -18,17 +18,38 @@
       file=./rust-toolchain.toml;
       sha256="sha256-pw28Lw1M3clAtMjkE/wry0WopX0qvzxeKaPUFoupC00=";
     };
+    cytrans-web-cargo-nix = (import ./cytrans-web/Cargo.nix {inherit pkgs;});
+    cytrans-web-server = cytrans-web-cargo-nix.workspaceMembers.server.build;
+      #.internal.buildRustCrateWithFeatures {packageId="anyhow";};
+    cytrans-web-client = (import ./cytrans-web/Cargo.nix {pkgs = pkgs.pkgsCross.wasm32-unknown-none;}).workspaceMembers.client.build.lib;
+
+    # wasm-bindgen-cli must be *exactly* the same version as the wasm-bindgen version used by our crate,
+    # so to be resilient in the face of us updating the version of wasm-bindgen we use, we pin it to the same version.
+    # we will have to update two hashes every time but I call that a fair trade.
+    wasm-bindgen-cli = pkgs.buildWasmBindgenCli rec {
+      src = pkgs.fetchCrate {
+        pname = "wasm-bindgen-cli";
+	version = cytrans-web-cargo-nix.internal.crates.wasm-bindgen.version;
+	hash = "sha256-3RJzK7mkYFrs7C/WkhW9Rr4LdP5ofb2FdYGz1P7Uxog=";
+      };
+      cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
+        inherit src;
+	inherit (src) pname version;
+	hash = "sha256-qsO12332HSjWCVKtf1cUePWWb9IdYUmT+8OPj/XP2WE=";
+      };
+    };
   in {
     devShells.default = pkgs.mkShell {
-      buildInputs = [fenixToolchain pkgs.wasm-pack];
+      buildInputs = [fenixToolchain wasm-bindgen-cli];
     };
 
     packages = {
-      cytrans-web-client = pkgs.runCommand "cytrans-web-client" {
-        buildInputs = [fenixToolchain pkgs.wasm-pack];
-      } ''
-        cd ${./cytrans-web/client}
-	wasm-pack build --target web --out-dir $out
+      inherit cytrans-web-server cytrans-web-client;
+      cytrans-web-www = pkgs.runCommand "cytrans-web-www-root" {nativeBuildInputs = [wasm-bindgen-cli];} ''
+      shopt -s extglob
+      mkdir $out
+      cp -r ${./cytrans-web/www}/!(client*) $out/
+      wasm-bindgen ${cytrans-web-client}/lib/client*.wasm --target web --out-dir $out/wasm --out-name client
       '';
     };
 
