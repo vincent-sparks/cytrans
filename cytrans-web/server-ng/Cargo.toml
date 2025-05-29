@@ -1,0 +1,9 @@
+[package]
+name = "server-ng"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+actix-web = "4.11.0"
+clap = { version = "4.5.37", features = ["derive"] }
+cytrans = { version = "0.3.0", path = "../../libcytrans", features = ["commands"] }

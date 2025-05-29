@@ -1,2 +1,2 @@
 [workspace]
-members = ["server", "client", "ws-protocol"]
+members = ["server", "client", "ws-protocol", "server-ng"]
