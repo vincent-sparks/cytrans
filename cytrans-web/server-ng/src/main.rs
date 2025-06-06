@@ -1,16 +1,27 @@
-use std::{net::{Ipv6Addr, SocketAddr, SocketAddrV6}, path::PathBuf};
+#![feature(normalize_lexically)]
+use std::{ffi::{OsStr, OsString}, net::SocketAddr, path::{Path, PathBuf}, sync::Arc};
 
-use actix_web::{get, post, web::{self, Html}, App, HttpServer, Responder};
+use actix_web::{body::{BoxBody, MessageBody}, get, http::{header::{AcceptEncoding, ContentEncoding, Encoding, Header, HeaderName, VARY}, StatusCode}, post, web::{self, Data, Html}, App, HttpRequest, HttpResponse, HttpResponseBuilder, HttpServer, Responder};
 use clap::Parser;
+use static_hosting::show_404;
+
+mod noscript;
+#[cfg(feature="static_hosting")]
+mod static_hosting;
 
 #[get("/hello")]
 async fn hello() -> impl Responder {
     Html::new("<!DOCTYPE html><html><head><title>Hello Actix!</title></head><body><p>Hello world!</p></body></html>")
 }
 
+#[get("/noscript/browse/{path}")]
+async fn browse(path: web::Path<String>, data: Data<Args>) -> impl Responder {
+    Html::new(format!("<!DOCTYPE html><html><head><title>Hello Actix!</title></head><body><p>{path:?}</p></body></html>"))
+}
+
 #[derive(clap::Parser, Debug)]
 #[command(version)]
-struct Args {
+struct ArgsParsed {
     /// Address to listen on.
     /// May be specified more than once to listen on multiple addresses.  May be a combination of IPv4
     /// and IPv6.  Default is all interfaces, port 8080.
@@ -46,16 +57,42 @@ struct Args {
     ///   client who intends to watch the video.
     #[arg(long,long_help)]
     url_prefix: String,
+    /// Directory containing cytrans-web static files (CSS, WASM, static HTML, etc), if you want
+    /// cytrans-web-server to host these as well instead of making e.g. nginx do it.
+    #[arg(long,long_help)]
+    static_dir: Option<PathBuf>,
+}
+
+struct Args {
+    input_dir: Option<PathBuf>,
+    output_dir: PathBuf,
+    url_prefix: String,
+    static_dir: Option<PathBuf>,
+}
+async fn host_static(req: HttpRequest, args: Data<Args>) -> HttpResponse<BoxBody> {
+    let Some(ref static_path) = args.static_dir else {
+        return show_404();
+    };
+    static_hosting::serve_static(req, static_path, "").await
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let args = Args::parse();
-    HttpServer::new(|| {
+    let ArgsParsed {address, input_dir, output_dir, static_dir, url_prefix} = ArgsParsed::parse();
+    //let output_dir = sneak::Dir::open(output_dir)?;
+    //let input_dir = match input_dir {
+    //    Some(x) => Some(sneak::Dir::open(x)?),
+    //    None => None,
+    //};
+    let args = web::Data::new(Args {input_dir, output_dir, static_dir, url_prefix});
+
+    HttpServer::new(move || {
         App::new()
+            .app_data(args.clone())
             .service(hello)
+            .default_service(web::to(host_static))
     })
-    .bind(&*args.address)?
+    .bind(&*address)?
     .run()
     .await
 }
