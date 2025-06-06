@@ -1,5 +1,5 @@
 {
-  description = "CyTrans -- a command line- and web-based transcoder for CyTube";
+  description = "CyTrans -- a TUI- and web-based transcoder for CyTube";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
@@ -45,15 +45,16 @@
 
     packages = {
       inherit cytrans-web-server cytrans-web-client;
-      cytrans-web-www = pkgs.runCommand "cytrans-web-www-root" {nativeBuildInputs = [wasm-bindgen-cli];} ''
+      cytrans-web-www = pkgs.runCommand "cytrans-web-www-root" {nativeBuildInputs = [wasm-bindgen-cli pkgs.binaryen];} ''
       shopt -s extglob
+      echo Optimizing wasm...
+      wasm-opt ${cytrans-web-client}/lib/client*.wasm -o client.wasm
       mkdir $out
-      cp -r ${./cytrans-web/www}/!(client*) $out/
-      wasm-bindgen ${cytrans-web-client}/lib/client*.wasm --target web --out-dir $out/wasm --out-name client
+      ln -s ${./cytrans-web/www}/!(client*) $out/
+      echo Generating JS bindings...
+      wasm-bindgen client.wasm --target web --no-typescript --out-dir $out/client
       '';
     };
-
-    packages.default = pkgs.hello;
 
   });
 }
