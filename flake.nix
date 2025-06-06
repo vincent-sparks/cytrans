@@ -16,12 +16,17 @@
     fenixPkgs = fenix.packages.${system};
     fenixToolchain = fenixPkgs.fromToolchainFile {
       file=./rust-toolchain.toml;
-      sha256="sha256-pw28Lw1M3clAtMjkE/wry0WopX0qvzxeKaPUFoupC00=";
+      sha256="sha256-P/y/N4q0w1Jy2BI5esQDD1zaGnZK+0YDw1tz1CaEJkI=";
     };
-    cytrans-web-cargo-nix = (import ./cytrans-web/Cargo.nix {inherit pkgs;});
-    cytrans-web-server = cytrans-web-cargo-nix.workspaceMembers.server.build;
+    buildRustCrateForPkgs = pkgs: pkgs.buildRustCrate.override {
+      cargo=fenixToolchain;
+      rustc=fenixToolchain;
+    };
+    cytrans-web-cargo-nix = (import ./cytrans-web/Cargo.nix {inherit pkgs buildRustCrateForPkgs;});
+    #cytrans-web-server = cytrans-web-cargo-nix.workspaceMembers.server.build;
+    cytrans-web-server = cytrans-web-cargo-nix.workspaceMembers.server-ng.build;
       #.internal.buildRustCrateWithFeatures {packageId="anyhow";};
-    cytrans-web-client = (import ./cytrans-web/Cargo.nix {pkgs = pkgs.pkgsCross.wasm32-unknown-none;}).workspaceMembers.client.build.lib;
+    cytrans-web-client = (import ./cytrans-web/Cargo.nix {pkgs = pkgs.pkgsCross.wasm32-unknown-none; inherit buildRustCrateForPkgs;}).workspaceMembers.client.build.lib;
 
     # wasm-bindgen-cli must be *exactly* the same version as the wasm-bindgen version used by our crate,
     # so to be resilient in the face of us updating the version of wasm-bindgen we use, we pin it to the same version.
@@ -40,7 +45,7 @@
     };
   in {
     devShells.default = pkgs.mkShell {
-      buildInputs = [fenixToolchain wasm-bindgen-cli];
+      buildInputs = [fenixToolchain wasm-bindgen-cli pkgs.crate2nix];
     };
 
     packages = {
