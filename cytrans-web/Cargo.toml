@@ -1,2 +1,3 @@
 [workspace]
 members = ["server", "client", "ws-protocol", "server-ng"]
+resolver="3"

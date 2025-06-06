@@ -10,7 +10,6 @@ clap = { version = "4.5.37", features = ["derive", "unstable-doc"] }
 cytrans = { version = "0.3.0", path = "../../libcytrans", features = ["commands"] }
 libc = "0.2.172"
 percent-encoding = "2.3.1"
-sneak = "0.1.0-rc4"
 
 [features]
 default = ["static_hosting"]
