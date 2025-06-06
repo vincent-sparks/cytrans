@@ -13,11 +13,24 @@
 	color: white;
 }
 
+.trans {
+  background-image: linear-gradient(var(--trans-blue) 0% calc(var(--gradient-unit)*0.2), var(--trans-pink) calc(var(--gradient-unit)*0.2) calc(var(--gradient-unit)*0.4), white calc(var(--gradient-unit)*0.4) calc(var(--gradient-unit)*0.6), var(--trans-pink) calc(var(--gradient-unit)*0.6) calc(var(--gradient-unit)*0.8), var(--trans-blue) calc(var(--gradient-unit)*0.8) var(--gradient-unit));
+  background-clip: text;
+  color: transparent;
+  background-size: auto 1ex;
+  --gradient-unit:100%;
+  /*! background-position-y: calc(55% + 0.5em - 1ex); */
+  background-color: var(--trans-blue);
+  background-repeat: no-repeat;
+  background-position-y: 55%;
+}
+
 .unicornpuke {
 	height: 2px;
 	flex: 1;
 	animation: 3s linear 0s infinite normal none running bgloop;
-  background: repeating-linear-gradient(90deg, hsl(0,100%,50%), hsl(30,100%,50%), hsl(60,100%,50%), hsl(90,100%,50%), hsl(120,100%,50%), hsl(150,100%,50%), hsl(180,100%,50%), hsl(210,100%,50%), hsl(240,100%,50%), hsl(270,100%,50%), hsl(300,100%,50%), hsl(330,100%,50%), hsl(360,100%,50%) var(--rgbwidth)) center/var(--rgbwidth);
+	/*! background: repeating-linear-gradient(90deg, hsl(0,100%,50%), hsl(30,100%,50%), hsl(60,100%,50%), hsl(90,100%,50%), hsl(120,100%,50%), hsl(150,100%,50%), hsl(180,100%,50%), hsl(210,100%,50%), hsl(240,100%,50%), hsl(270,100%,50%), hsl(300,100%,50%), hsl(330,100%,50%), hsl(360,100%,50%) var(--rgbwidth)) center/var(--rgbwidth); */
+	background: repeating-linear-gradient(90deg in hsl longer hue, hsl(0,100%,50%), hsl(359,100%,50%) var(--rgbwidth)) center/var(--rgbwidth); */
 }
 
 body {

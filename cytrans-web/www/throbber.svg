@@ -1,4 +1,25 @@
-<svg version="1.1" width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-	<rect width="5" height="5" fill="red" x="0" y="100"/>
-	<rect width="5" height="5" fill="black" x="100" y="0"/>
+<svg version="1.1" width="320" height="320" xmlns="http://www.w3.org/2000/svg">
+  <path
+    d="M 10 10
+       L 50 10
+       A 1 1 0 0 1 50 30
+       L 10 30
+       A 1 1 0 0 1 10 10"
+    stroke="black"
+    fill="none"
+    stroke-width="2"
+    fill-opacity="0.5" />
+  <rect width="3" height="15">
+    <animateMotion
+      path="M 10 10
+       L 50 10
+       A 1 1 0 0 1 50 30
+       L 10 30
+       A 1 1 0 0 1 10 10"
+      begin="0s"
+      dur="5s"
+      repeatCount="indefinite"
+      rotate=auto
+      />
+  </rect>
 </svg>
