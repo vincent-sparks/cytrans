@@ -16,7 +16,7 @@
     fenixPkgs = fenix.packages.${system};
     fenixToolchain = fenixPkgs.fromToolchainFile {
       file=./rust-toolchain.toml;
-      sha256="sha256-P/y/N4q0w1Jy2BI5esQDD1zaGnZK+0YDw1tz1CaEJkI=";
+      sha256="sha256-eFuFA5spScrde7b7lSV5QAND1m0+Ds6gbVODfDE3scg=";
     };
     buildRustCrateForPkgs = pkgs: pkgs.buildRustCrate.override {
       cargo=fenixToolchain;
@@ -26,7 +26,8 @@
     #cytrans-web-server = cytrans-web-cargo-nix.workspaceMembers.server.build;
     cytrans-web-server = cytrans-web-cargo-nix.workspaceMembers.server-ng.build;
       #.internal.buildRustCrateWithFeatures {packageId="anyhow";};
-    cytrans-web-client = (import ./cytrans-web/Cargo.nix {pkgs = pkgs.pkgsCross.wasm32-unknown-none; inherit buildRustCrateForPkgs;}).workspaceMembers.client.build.lib;
+    cytrans-web-client-wasm = (import ./cytrans-web/Cargo.nix {pkgs = pkgs.pkgsCross.wasm32-unknown-none; inherit buildRustCrateForPkgs;}).workspaceMembers.client.build.lib;
+    cytrans-web-client = doWasmBindgen cytrans-web-client-wasm "client";
 
     # wasm-bindgen-cli must be *exactly* the same version as the wasm-bindgen version used by our crate,
     # so to be resilient in the face of us updating the version of wasm-bindgen we use, we pin it to the same version.
@@ -43,6 +44,26 @@
 	hash = "sha256-qsO12332HSjWCVKtf1cUePWWb9IdYUmT+8OPj/XP2WE=";
       };
     };
+
+    doWasmBindgen = drv: outName: pkgs.runCommand "${outName}-bindgen" {buildInputs=[wasm-bindgen-cli pkgs.binaryen];} ''
+    wasm-opt ${drv}/lib/*.wasm -o ${outName}.wasm
+    mkdir $out
+    wasm-bindgen ${outName}.wasm --target web --no-typescript --out-dir $out/${outName}
+    '';
+
+    brotlifyScriptInternal = pkgs.writeShellScript "brotlify_script" ''
+      OUT_DIR="$1"
+      IN_PATH="$2"
+      REL_PATH=$(awk -F // "{print \$2}" <<< $IN_PATH)
+      OUT_PATH="$OUT_DIR/$REL_PATH.br"
+      mkdir -p $(dirname "$OUT_PATH")
+      ${pkgs.brotli}/bin/brotli -9 "$IN_PATH" -o "$OUT_PATH"
+    '';
+
+    cytrans-web-www-compressed = pkgs.runCommand "cytrans-www-compressed" {} ''
+      shopt -s extglob
+      find ${./cytrans-web/www}//!(client*) ${cytrans-web-client}// -type f -print0 | xargs -0 -n 1 -P $NIX_BUILD_CORES ${brotlifyScriptInternal} $out
+    '';
   in {
     devShells.default = pkgs.mkShell {
       buildInputs = [fenixToolchain wasm-bindgen-cli pkgs.crate2nix];
@@ -50,6 +71,7 @@
 
     packages = {
       inherit cytrans-web-server cytrans-web-client;
+      /*
       cytrans-web-www = pkgs.runCommand "cytrans-web-www-root" {nativeBuildInputs = [wasm-bindgen-cli pkgs.binaryen];} ''
       shopt -s extglob
       echo Optimizing wasm...
@@ -59,6 +81,8 @@
       echo Generating JS bindings...
       wasm-bindgen client.wasm --target web --no-typescript --out-dir $out/client
       '';
+      */
+      inherit cytrans-web-www-compressed;
     };
 
   });
