@@ -5,6 +5,8 @@ use actix_web::{body::{BoxBody, MessageBody}, get, http::{header::{AcceptEncodin
 use clap::Parser;
 use static_hosting::show_404;
 
+mod common;
+mod api;
 mod noscript;
 #[cfg(feature="static_hosting")]
 mod static_hosting;

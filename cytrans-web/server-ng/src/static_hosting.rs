@@ -3,44 +3,8 @@ use std::path::{Component, Path, PathBuf};
 use actix_files::NamedFile;
 use actix_web::{body::{BoxBody, MessageBody}, http::{header::{AcceptEncoding, ContentEncoding, Encoding, Header, VARY}, StatusCode}, web::Html, HttpRequest, HttpResponse, HttpResponseBuilder, Responder};
 
+use crate::common::sanitize_path;
 
-
-fn sanitize_path(input_path: &str) -> Option<PathBuf> {
-    let mut it = std::path::Path::new(input_path).components();
-    let mut res = PathBuf::new();
-    let Some(first_component) = it.next() else {
-        return Some(res);
-    };
-    match first_component {
-        Component::RootDir | Component::CurDir => {},
-        Component::Normal(os_str) => {res.push(os_str)},
-        _ => return None,
-    }
-
-    for item in it {
-        match item {
-            Component::CurDir => {},
-            Component::ParentDir => {
-                if !res.pop() {
-                    // we could no-op in this case and still be compliant,
-                    // but for personal reasons i would prefer to show a cheeky message to anyone
-                    // who tries path traversal, so we return None here.
-                    return None;
-                };
-            },
-            Component::Normal(path) => {
-                if path.as_encoded_bytes().starts_with(b".") {
-                    // dotfiles are not to be served!
-                    return None;
-                }
-                res.push(path)
-            },
-            _ => return None,
-        }
-    }
-
-    Some(res)
-}
 
 pub async fn serve_static(req: HttpRequest, path_prefix: &Path, strip_prefix: &str) -> HttpResponse<BoxBody> {
     let path = percent_encoding::percent_decode_str(req.path()).decode_utf8();
