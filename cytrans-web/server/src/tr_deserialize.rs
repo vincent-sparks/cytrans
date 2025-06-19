@@ -94,9 +94,11 @@ generate_visitor!(TranscodeArgs, TranscodeArgs<'ff>, TranscodeArgsDeserializer, 
                   r audio_tracks = VecSeed(RequestSeed(self.tracks, PhantomData)),
                   r subtitle_tracks = VecSeed(TrackSeed(self.tracks)),
                   r title,
-                  r extra_ffmpeg_args = VecSeed(OsStringSeed);
+                  r extra_ffmpeg_args = VecSeed(OsStringSeed),
+                  r force_demux_audio,
+                  r add_muxed_silence;
 
-                  {return Ok(TranscodeArgs {video_tracks, audio_tracks, subtitle_tracks, title, extra_ffmpeg_args, duration: self.duration} )}
+                  {return Ok(TranscodeArgs {video_tracks, audio_tracks, subtitle_tracks, title, extra_ffmpeg_args, force_demux_audio, add_muxed_silence, duration: self.duration} )}
                   );
 
 #[derive(Clone, Copy)]

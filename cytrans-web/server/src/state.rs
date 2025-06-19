@@ -83,8 +83,8 @@ impl State {
             Err(_) => p,
         };
         let ref pfx = match kind {
-            PathKind::Input => self.media_prefix,
-            PathKind::Output => self.output_prefix,
+            PathKind::Input => &self.media_prefix,
+            PathKind::Output => &self.output_prefix,
         };
         Ok(pfx.join(p))
     }
@@ -117,7 +117,7 @@ impl State {
                     }
                 };
 
-                let (job, metadata, did_demux) = build_ffmpeg_command(&path, job.slug, self.sanitize_path(job.slug).unwrap());
+                let (job, metadata, did_demux) = build_ffmpeg_command(&path, job.slug, &self.sanitize_path(&job.slug, PathKind::Output).unwrap());
 
                 if did_demux {
                 }
@@ -230,7 +230,7 @@ impl State {
         let (command, manifest) = build_ffmpeg_command(file, args, &output_path);
         // TODO do something with the manifest
         let command = command.into();
-        let job = TranscodeJob {command, slug, duration, manifest};
+        let job = TranscodeJob {command, slug, duration};//, manifest};
         // acquire the R/W lock on the queue
         let mut queue = self.queue.write().await;
         queue.push_back(job);
