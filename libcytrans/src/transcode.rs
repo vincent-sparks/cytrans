@@ -464,8 +464,11 @@ pub fn build_demux_commands(mut meta: MetadataManifest, root_path: &Path) -> (Ve
 
     if let Some(muxed_audio_meta) = meta.muxed_audio.take() {
         // TODO account for bitrate when choosing an audio track to demux.
-        let best = meta.video_files.iter().filter(|x| x.audio_codec.is_some() && !x.audio_is_silent)
-            .max_by_key(|x| (x.audio_codec == Some(AudioCodec::FLAC), )).unwrap();
+        let Some(best) = meta.video_files.iter().filter(|x| x.audio_codec.is_some() && !x.audio_is_silent)
+            .max_by_key(|x| (x.audio_codec == Some(AudioCodec::FLAC), )) else {
+                // no videos have an audio track -- nothing to do
+                return (vec![], meta)
+            };
 
         let codec = best.audio_codec.unwrap();
         let container = AudioContainer::find(codec);
