@@ -78,6 +78,7 @@ async fn host_static(req: HttpRequest, args: Data<Args>) -> HttpResponse<BoxBody
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    env_logger::init();
     let ArgsParsed {address, input_dir, output_dir, static_dir, url_prefix} = ArgsParsed::parse();
     //let output_dir = sneak::Dir::open(output_dir)?;
     //let input_dir = match input_dir {

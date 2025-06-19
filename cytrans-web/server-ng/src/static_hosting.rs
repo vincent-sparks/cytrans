@@ -1,7 +1,7 @@
 use std::path::{Component, Path, PathBuf};
 
 use actix_files::NamedFile;
-use actix_web::{body::{BoxBody, MessageBody}, http::{header::{AcceptEncoding, ContentEncoding, Encoding, Header, VARY}, StatusCode}, web::Html, HttpRequest, HttpResponse, HttpResponseBuilder, Responder};
+use actix_web::{body::{BoxBody, MessageBody}, http::{header::{AcceptEncoding, ContentEncoding, ContentType, Encoding, Header, CONTENT_TYPE, RANGE, VARY}, StatusCode}, mime::TEXT_HTML_UTF_8, web::Html, HttpRequest, HttpResponse, HttpResponseBuilder, Responder};
 
 
 
@@ -42,6 +42,15 @@ fn sanitize_path(input_path: &str) -> Option<PathBuf> {
     Some(res)
 }
 
+/// "But wait!" I hear you say. "Doesn't actix_files have this built in?"
+/// 
+/// Yes, dear reader! Yes it does!  It's right there in [`actix_files::Files`]!  Unfortunately,
+/// that code does not have support for files that are compressed on disk, and does not have
+/// support for adding callbacks to change how files are found! The only way to implement that using
+/// the Files handler would be to write a 404 handler that reads the URL path and searches for
+/// a Brotli file under the same path on disk. Unfortunately, since the 404 handler doesn't get
+/// access to the disk path that was searched, we would have to reimplement all the path
+/// translation from scratch... and at that point, why bother using `actix_files::Files` at all?
 pub async fn serve_static(req: HttpRequest, path_prefix: &Path, strip_prefix: &str) -> HttpResponse<BoxBody> {
     let path = percent_encoding::percent_decode_str(req.path()).decode_utf8();
     let path = match path {
@@ -53,11 +62,10 @@ pub async fn serve_static(req: HttpRequest, path_prefix: &Path, strip_prefix: &s
     dbg!(path.as_ref());
     let path = path.strip_prefix(strip_prefix).expect("request path did not contain the prefix");
     let Some(path) = sanitize_path(path) else {
-        return Html::new("<!DOCTYPE html><body><h1>400 Nice Try</h1><p>Surely you didn't think path traversal was going to be <i>that</i> easy.</p></body></html>")
-            .customize()
-            .with_status(StatusCode::BAD_REQUEST)
-            .respond_to(&req)
-            .map_body(|_,b|b.boxed());
+        return HttpResponse::BadRequest()
+            .reason("Nice Try") // yes this technically violates RFC.  so what?  it's never going to be shown to anyone who isn't looking for an exploit.
+            .append_header(ContentType::html())
+            .body(BoxBody::new("<!DOCTYPE html><body><h1>400 Nice Try</h1><p>Surely you didn't think path traversal was going to be <i>that</i> easy.</p></body></html>"));
     };
     let mut path = path_prefix.join(path);
     if path.is_dir() {
@@ -82,12 +90,12 @@ pub async fn serve_static(req: HttpRequest, path_prefix: &Path, strip_prefix: &s
                     must_decompress = match negotiate_compression(&req, Encoding::brotli()) {
                         Ok(x) => x,
                         Err(mut resp) => {
-                            resp .append_header((VARY, "Accept-Encoding"));
+                            resp.append_header((VARY, "Accept-Encoding"));
                             return resp
                                 .respond_to(&req)
                                 .map_body(|_,b|b.boxed());
                         },
-                    }
+                    } | req.headers().contains_key(RANGE);
                 }, Err(e) => {
                     println!("couldn't open brotli file {}: {e}", path2.display());
                     return show_404();
