@@ -46,9 +46,9 @@
     };
 
     doWasmBindgen = drv: outName: pkgs.runCommand "${outName}-bindgen" {buildInputs=[wasm-bindgen-cli pkgs.binaryen];} ''
-    wasm-opt ${drv}/lib/*.wasm -o ${outName}.wasm
-    mkdir $out
-    wasm-bindgen ${outName}.wasm --target web --no-typescript --out-dir $out/${outName}
+      wasm-opt ${drv}/lib/*.wasm -o ${outName}.wasm # *.wasm should match exactly one file
+      mkdir $out
+      wasm-bindgen ${outName}.wasm --target web --no-typescript --out-dir $out/${outName}
     '';
 
     brotlifyScriptInternal = pkgs.writeShellScript "brotlify_script" ''
