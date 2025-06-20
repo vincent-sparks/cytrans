@@ -8,6 +8,7 @@ use static_hosting::show_404;
 mod common;
 mod api;
 mod noscript;
+mod error;
 #[cfg(feature="static_hosting")]
 mod static_hosting;
 
@@ -91,6 +92,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(error::ErrorConversionMiddleware)
             .app_data(args.clone())
             .service(hello)
             .default_service(web::to(host_static))

@@ -5473,6 +5473,14 @@ rec {
             name = "percent-encoding";
             packageId = "percent-encoding";
           }
+          {
+            name = "serde";
+            packageId = "serde";
+          }
+          {
+            name = "serde_json";
+            packageId = "serde_json";
+          }
         ];
         features = {
           "default" = [ "static_hosting" ];

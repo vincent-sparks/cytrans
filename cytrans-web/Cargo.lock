@@ -1710,6 +1710,8 @@ dependencies = [
  "libc",
  "log",
  "percent-encoding",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
