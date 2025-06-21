@@ -76,7 +76,7 @@ async fn host_static(req: HttpRequest, args: Data<Args>) -> HttpResponse<BoxBody
     let Some(ref static_path) = args.static_dir else {
         return show_404();
     };
-    static_hosting::serve_static(req, static_path, "").await
+    static_hosting::serve_static(req, static_path, "").await.unwrap_or_else(HttpResponse::from_error)
 }
 
 #[actix_web::main]

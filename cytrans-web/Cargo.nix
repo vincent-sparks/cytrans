@@ -5413,7 +5413,7 @@ rec {
           }
           {
             name = "thiserror";
-            packageId = "thiserror";
+            packageId = "thiserror 1.0.69";
           }
           {
             name = "tokio";
@@ -5480,6 +5480,10 @@ rec {
           {
             name = "serde_json";
             packageId = "serde_json";
+          }
+          {
+            name = "thiserror";
+            packageId = "thiserror 2.0.12";
           }
         ];
         features = {
@@ -5846,7 +5850,7 @@ rec {
         ];
 
       };
-      "thiserror" = rec {
+      "thiserror 1.0.69" = rec {
         crateName = "thiserror";
         version = "1.0.69";
         edition = "2021";
@@ -5857,16 +5861,61 @@ rec {
         dependencies = [
           {
             name = "thiserror-impl";
-            packageId = "thiserror-impl";
+            packageId = "thiserror-impl 1.0.69";
           }
         ];
 
       };
-      "thiserror-impl" = rec {
+      "thiserror 2.0.12" = rec {
+        crateName = "thiserror";
+        version = "2.0.12";
+        edition = "2021";
+        sha256 = "024791nsc0np63g2pq30cjf9acj38z3jwx9apvvi8qsqmqnqlysn";
+        authors = [
+          "David Tolnay <dtolnay@gmail.com>"
+        ];
+        dependencies = [
+          {
+            name = "thiserror-impl";
+            packageId = "thiserror-impl 2.0.12";
+          }
+        ];
+        features = {
+          "default" = [ "std" ];
+        };
+        resolvedDefaultFeatures = [ "default" "std" ];
+      };
+      "thiserror-impl 1.0.69" = rec {
         crateName = "thiserror-impl";
         version = "1.0.69";
         edition = "2021";
         sha256 = "1h84fmn2nai41cxbhk6pqf46bxqq1b344v8yz089w1chzi76rvjg";
+        procMacro = true;
+        libName = "thiserror_impl";
+        authors = [
+          "David Tolnay <dtolnay@gmail.com>"
+        ];
+        dependencies = [
+          {
+            name = "proc-macro2";
+            packageId = "proc-macro2";
+          }
+          {
+            name = "quote";
+            packageId = "quote";
+          }
+          {
+            name = "syn";
+            packageId = "syn 2.0.103";
+          }
+        ];
+
+      };
+      "thiserror-impl 2.0.12" = rec {
+        crateName = "thiserror-impl";
+        version = "2.0.12";
+        edition = "2021";
+        sha256 = "07bsn7shydaidvyyrm7jz29vp78vrxr9cr9044rfmn078lmz8z3z";
         procMacro = true;
         libName = "thiserror_impl";
         authors = [
@@ -6562,7 +6611,7 @@ rec {
           }
           {
             name = "thiserror";
-            packageId = "thiserror";
+            packageId = "thiserror 1.0.69";
           }
           {
             name = "url";
