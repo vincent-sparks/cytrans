@@ -21,7 +21,7 @@ pub enum SanitizePathError {
 }
 
 #[derive(Debug, thiserror::Error)]
-enum BrowseError {
+pub enum BrowseError {
     #[error("{0}")]
     IoError(#[from] std::io::Error),
     #[error("{0}")]

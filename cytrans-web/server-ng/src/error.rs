@@ -135,6 +135,27 @@ fn find_best<'a>(generators: &'a [Generator], preferences: &[Mime]) -> Option<(&
         .min_by_key(|(_, pos)| *pos)
 }
 
+fn score(mime: &Mime, preferences: &[Mime]) -> Option<usize> {
+    let mut best = None;
+    let mut found_matching_subtype_yet = false;
+
+    for (i, preference) in preferences.iter().enumerate() {
+        if preference.type_() == mime.type_() {
+            if preference.subtype() == mime.subtype() {
+                return Some(i);
+            }
+            if preference.subtype() == "*" {
+                best = Some(i);
+                found_matching_subtype_yet = true;
+            }
+        } else if preference.type_() == "*" && !found_matching_subtype_yet {
+            best = Some(i);
+        }
+    }
+
+    best
+}
+
 fn generate_html(error: &dyn ResponseError, _head: &ResponseHead) -> BoxBody {
     BoxBody::new(format!("<!DOCTYPE html><html><body><h1>{}</h1><p>{}</p></body></html>", error.status_code(), error))
 }
