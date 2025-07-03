@@ -29,6 +29,8 @@
     cytrans-web-client-wasm = (import ./cytrans-web/Cargo.nix {pkgs = pkgs.pkgsCross.wasm32-unknown-none; inherit buildRustCrateForPkgs;}).workspaceMembers.client.build.lib;
     cytrans-web-client = doWasmBindgen cytrans-web-client-wasm "client";
 
+    cytrans-tui-cargo-nix = (import ./cytrans-cli/Cargo.nix {inherit buildRustCrateForPkgs; pkgs=pkgs.pkgsCross.musl64.pkgsStatic;});
+
     # wasm-bindgen-cli must be *exactly* the same version as the wasm-bindgen version used by our crate,
     # so to be resilient in the face of us updating the version of wasm-bindgen we use, we pin it to the same version.
     # we will have to update two hashes every time but I call that a fair trade.
@@ -83,6 +85,7 @@
       '';
       */
       inherit cytrans-web-www-compressed;
+      cytrans-tui = cytrans-tui-cargo-nix.rootCrate.build;
     };
 
   });
