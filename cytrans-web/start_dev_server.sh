@@ -12,4 +12,4 @@ else
     STATIC_PATH=$CYTRANS_WEB_ROOT/www
 fi
 
-$SERVER_PATH/bin/server-ng --output-dir . --url-prefix localhost:8080 --static-dir $STATIC_PATH
+RUST_LOG=info $SERVER_PATH/bin/server-ng --output-dir . --url-prefix localhost:8080 --static-dir $STATIC_PATH

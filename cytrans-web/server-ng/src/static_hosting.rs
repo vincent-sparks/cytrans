@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use actix_files::NamedFile;
-use actix_web::{body::BoxBody, http::{header::{self, AcceptEncoding, ContentEncoding, Encoding, Header, TryIntoHeaderValue as _, RANGE}, StatusCode}, HttpRequest, HttpResponse, Responder, ResponseError};
+use actix_web::{body::BoxBody, http::{header::{self, AcceptEncoding, ContentEncoding, ContentType, Encoding, Header, TryIntoHeaderValue as _, RANGE}, StatusCode}, HttpRequest, HttpResponse, Responder, ResponseError};
 
 use crate::common::{decode_path, sanitize_path, SanitizePathError};
 
@@ -54,7 +54,6 @@ impl ResponseError for ServeStaticError {
 /// access to the disk path that was searched, we would have to reimplement all the path
 /// translation from scratch... and at that point, why bother using `actix_files::Files` at all?
 pub async fn serve_static(req: HttpRequest, path_prefix: &Path, strip_prefix: &str) -> Result<HttpResponse<BoxBody>, ServeStaticError> {
-    dbg!(req.path());
     let path = decode_path(req.path())?;
     let path = path.strip_prefix(strip_prefix).expect("request path did not contain the prefix");
     let path = sanitize_path(path)?;
@@ -86,7 +85,7 @@ pub async fn serve_static(req: HttpRequest, path_prefix: &Path, strip_prefix: &s
     if !must_decompress {
         Ok(file.respond_to(&req))
     } else {
-        todo!()
+        Ok(HttpResponse::NotImplemented().append_header(ContentType::html()).body("<!DOCTYPE html><html><body><p>Your browser does not support Brotli compression.</p><p>This server is not configured to deliver a decompressed body. You cannot view this page at this time.</p></body></html>"))
     }
 }
 
@@ -94,6 +93,10 @@ pub fn show_404() -> HttpResponse {
     HttpResponse::NotFound().into()
 }
 
+/// Parses the Accept-Encoding header to determine if the client can accept the file we have on
+/// disk as-is without decompressing it.
+///
+/// Returns true if we must decompress, false otherwise.
 fn negotiate_compression(req: &HttpRequest, fs_encoding: Encoding) -> Result<bool, ServeStaticError> {
     if let Ok(accept) = AcceptEncoding::parse(req) {
         match accept.negotiate([&fs_encoding, &Encoding::identity()].into_iter()) {

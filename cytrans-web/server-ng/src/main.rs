@@ -1,4 +1,5 @@
 #![feature(normalize_lexically)]
+#![feature(associated_type_defaults)]
 use std::{ffi::{OsStr, OsString}, net::SocketAddr, path::{Path, PathBuf}, sync::Arc};
 
 use actix_web::{body::{BoxBody, MessageBody}, get, http::{header::{AcceptEncoding, ContentEncoding, Encoding, Header, HeaderName, VARY}, StatusCode}, post, web::{self, Data, Html}, App, HttpRequest, HttpResponse, HttpResponseBuilder, HttpServer, Responder};
@@ -9,6 +10,7 @@ mod common;
 mod api;
 mod noscript;
 mod error;
+mod util;
 #[cfg(feature="static_hosting")]
 mod static_hosting;
 

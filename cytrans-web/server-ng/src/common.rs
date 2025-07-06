@@ -1,7 +1,10 @@
 use std::{borrow::Cow, path::{Component, Path, PathBuf}};
 
-use actix_web::{body::BoxBody, http::{header::{ContentType, TryIntoHeaderValue as _}, StatusCode}, ResponseError};
+use actix_web::{body::BoxBody, http::{header::{ContentType, TryIntoHeaderValue as _}, StatusCode}, mime, web::Data, HttpResponse, Responder, ResponseError};
 
+use crate::util::{AARWrapper, AcceptAwareResponse};
+
+#[derive(PartialOrd,Ord,PartialEq,Eq)]
 enum Entry {
     Dir(String),
     File(String),
@@ -26,6 +29,8 @@ pub enum BrowseError {
     IoError(#[from] std::io::Error),
     #[error("{0}")]
     NaughtyPath(#[from] SanitizePathError),
+    #[error("Browsing is disabled on this server")]
+    BrowsingDisabled,
 }
 
 impl ResponseError for SanitizePathError {
@@ -60,12 +65,14 @@ impl ResponseError for BrowseError {
         match self {
             BrowseError::IoError(error) => error.status_code(),
             BrowseError::NaughtyPath(error) => error.status_code(),
+            BrowseError::BrowsingDisabled => StatusCode::FORBIDDEN,
         }
     }
     fn error_response(&self) -> actix_web::HttpResponse {
         match self {
             BrowseError::IoError(error) => error.error_response(),
             BrowseError::NaughtyPath(error) => error.error_response(),
+            BrowseError::BrowsingDisabled => actix_web::HttpResponse::Forbidden().into(), // TODO
         }
     }
 }
@@ -125,7 +132,12 @@ pub fn sanitize_path(input_path: &str) -> Result<PathBuf, SanitizePathError> {
     Ok(res)
 }
 
-pub fn browse(input_path: &Path, browse_path: &str) -> Result<Vec<Entry>, BrowseError> {
+pub(crate) struct BrowseResult(Vec<Entry>);
+
+pub fn browse(args: Data<crate::ArgsParsed>, browse_path: &str) -> Result<BrowseResult, BrowseError> {
+    let Some(input_path) = &args.input_dir else {
+        return Err(BrowseError::BrowsingDisabled);
+    };
     let p = sanitize_path(browse_path)?;
     let p = input_path.join(p);
     let mut v = Vec::new();
@@ -145,5 +157,43 @@ pub fn browse(input_path: &Path, browse_path: &str) -> Result<Vec<Entry>, Browse
             v.push(Entry::File(name.into()));
         }
     }
-    Ok(v)
+    Ok(BrowseResult(v))
+}
+
+impl BrowseResult {
+    fn output_plain_text(self) -> BoxBody {
+        let mut v = Vec::new();
+
+        for element in self.0 {
+            match element {
+                Entry::Dir(name) => {
+                    v.extend(name.as_bytes());
+                    v.push(b'/');
+                    v.push(b'\n');
+                },
+                Entry::File(name) => {
+                    v.extend(name.as_bytes());
+                    v.push(b'\n');
+                },
+            }
+        }
+
+        BoxBody::new(v)
+    }
+
+    fn output_json(self) -> BoxBody {
+    }
+}
+
+impl AcceptAwareResponse for BrowseResult {
+    type Body = BoxBody;
+    const FORMATS: &[(actix_web::mime::Mime, fn(Self) -> Self::Body)] = &[(mime::APPLICATION_JSON, Self::output_json), (mime::TEXT_PLAIN, Self::output_plain_text)];
+}
+
+impl Responder for BrowseResult {
+    type Body = <AARWrapper<Self> as Responder>::Body;
+
+    fn respond_to(self, req: &actix_web::HttpRequest) -> HttpResponse<Self::Body> {
+        AARWrapper(self).respond_to(req)
+    }
 }

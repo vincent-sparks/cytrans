@@ -1,5 +1,6 @@
 use actix_web::{body::BoxBody, dev::{ResponseHead, Service, ServiceRequest, ServiceResponse, Transform}, http::header::{self, Accept, ContentType, Header, TryIntoHeaderValue as _}, mime::{self, Mime}, ResponseError};
 use serde::ser::SerializeMap;
+use crate::util::mime_score;
 
 struct Generator {
     mime: Mime,
@@ -95,8 +96,7 @@ pub fn convert_error(mut sv_resp: ServiceResponse) -> ServiceResponse {
             )
             .map(ContentType)
         {
-            if preferences.iter()
-                .position(|preference| mime_matches(preference, &response_type.0))
+            if mime_score(&response_type.0, &preferences)
                 .is_some_and(|x| x <= generator_pos)
             {
                     // client prefers what the response already contains to anything we could
@@ -122,44 +122,15 @@ pub fn convert_error(mut sv_resp: ServiceResponse) -> ServiceResponse {
     }
 }
 
-fn mime_matches(wildcard: &Mime, concrete: &Mime) -> bool {
-    wildcard.type_() == "*" || (wildcard.type_() == concrete.type_() && (wildcard.subtype() == "*" || wildcard.subtype() == concrete.subtype()))
-}
-
 fn find_best<'a>(generators: &'a [Generator], preferences: &[Mime]) -> Option<(&'a Generator, usize)> {
     generators.iter()
-        .filter_map(|g| preferences.iter()
-            .position(|preference| mime_matches(preference, &g.mime))
-            .map(|pos| (g,pos))
-        )
+        .filter_map(|g| mime_score(&g.mime, preferences).map(|x|(g,x)))
         .min_by_key(|(_, pos)| *pos)
-}
-
-fn score(mime: &Mime, preferences: &[Mime]) -> Option<usize> {
-    let mut best = None;
-    let mut found_matching_subtype_yet = false;
-
-    for (i, preference) in preferences.iter().enumerate() {
-        if preference.type_() == mime.type_() {
-            if preference.subtype() == mime.subtype() {
-                return Some(i);
-            }
-            if preference.subtype() == "*" {
-                best = Some(i);
-                found_matching_subtype_yet = true;
-            }
-        } else if preference.type_() == "*" && !found_matching_subtype_yet {
-            best = Some(i);
-        }
-    }
-
-    best
 }
 
 fn generate_html(error: &dyn ResponseError, _head: &ResponseHead) -> BoxBody {
     BoxBody::new(format!("<!DOCTYPE html><html><body><h1>{}</h1><p>{}</p></body></html>", error.status_code(), error))
 }
-
 
 fn generate_json(error: &dyn ResponseError, _head: &ResponseHead) -> BoxBody {
     BoxBody::new(serde_json::to_string(&ErrorSerializable(error.to_string())).expect("serializer should never fail"))
@@ -204,9 +175,7 @@ mod test {
     use actix_web::{body::MessageBody, error::InternalError, http::StatusCode, test::TestRequest, HttpRequest};
 
     use super::*;
-    fn generate_test_request(accept: &str) -> HttpRequest {
-        TestRequest::get().insert_header((header::ACCEPT, accept)).to_http_request()
-    }
+    use crate::util::test::generate_test_request;
     fn generate_custom_test_response(accept: &str, error: impl ResponseError + 'static) -> ServiceResponse {
         ServiceResponse::from_err(error, generate_test_request(accept))
     }

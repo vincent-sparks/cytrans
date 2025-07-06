@@ -15,6 +15,7 @@ percent-encoding = "2.3.1"
 serde = { version = "1.0.219" }
 serde_json = "1.0.140"
 thiserror = "2.0.12"
+tokio = { version = "1.46.1", features = ["fs"] }
 
 [features]
 default = ["static_hosting"]
