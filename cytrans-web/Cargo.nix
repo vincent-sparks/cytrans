@@ -418,7 +418,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "full" ];
           }
         ];
@@ -874,7 +874,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "full" "extra-traits" ];
           }
         ];
@@ -1152,7 +1152,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             usesDefaultFeatures = false;
             features = [ "clone-impls" "full" "parsing" "printing" "proc-macro" "visit-mut" ];
           }
@@ -1439,14 +1439,14 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "full" "parsing" "extra-traits" ];
           }
         ];
         devDependencies = [
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "full" "extra-traits" ];
           }
         ];
@@ -1593,9 +1593,9 @@ rec {
       };
       "bumpalo" = rec {
         crateName = "bumpalo";
-        version = "3.18.1";
+        version = "3.19.0";
         edition = "2021";
-        sha256 = "1vmfniqr484l4ffkf0056g6hakncr7kdh11hyggh9kc7c5nvfgbr";
+        sha256 = "0hsdndvcpqbjb85ghrhska2qxvp9i75q2vb70hma9fxqawdy9ia6";
         authors = [
           "Nick Fitzgerald <fitzgen@gmail.com>"
         ];
@@ -1786,7 +1786,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "full" ];
           }
         ];
@@ -1828,15 +1828,26 @@ rec {
       };
       "cobs" = rec {
         crateName = "cobs";
-        version = "0.2.3";
-        edition = "2018";
-        sha256 = "05gd16mws4yd63h8jr3p08in8y8w21rpjp5jb55hzl9bgalh5fk7";
+        version = "0.3.0";
+        edition = "2021";
+        sha256 = "18f0kxxa1fqb8pz2dxwssnhsrvhrs5j4p8xllgin5d7h36sn3a8g";
         authors = [
           "Allen Welkie <>"
-          "James Munns <james.munns@ferrous-systems.com>"
+          "James Munns <james@onevariable.com>"
+        ];
+        dependencies = [
+          {
+            name = "thiserror";
+            packageId = "thiserror 2.0.12";
+            usesDefaultFeatures = false;
+          }
         ];
         features = {
-          "default" = [ "use_std" ];
+          "default" = [ "std" ];
+          "defmt" = [ "dep:defmt" ];
+          "serde" = [ "dep:serde" ];
+          "std" = [ "alloc" "thiserror/std" ];
+          "use_std" = [ "std" ];
         };
       };
       "colorchoice" = rec {
@@ -2031,7 +2042,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "full" "extra-traits" ];
           }
         ];
@@ -2061,7 +2072,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
           }
         ];
 
@@ -2136,7 +2147,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
           }
         ];
         buildDependencies = [
@@ -2232,7 +2243,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
           }
           {
             name = "unicode-xid";
@@ -2326,7 +2337,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "derive" "fold" "full" ];
           }
         ];
@@ -2345,7 +2356,7 @@ rec {
         dependencies = [
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "full" ];
           }
         ];
@@ -2405,7 +2416,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
           }
         ];
         features = {
@@ -2440,7 +2451,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "extra-traits" "full" "derive" "parsing" "visit" ];
           }
         ];
@@ -3655,6 +3666,37 @@ rec {
         ];
 
       };
+      "io-uring" = rec {
+        crateName = "io-uring";
+        version = "0.7.8";
+        edition = "2021";
+        sha256 = "04whnj5a4pml44jhsmmf4p87bpgr7swkcijx4yjcng8900pj0vmq";
+        libName = "io_uring";
+        authors = [
+          "quininer <quininer@live.com>"
+        ];
+        dependencies = [
+          {
+            name = "bitflags";
+            packageId = "bitflags 2.9.1";
+          }
+          {
+            name = "cfg-if";
+            packageId = "cfg-if";
+          }
+          {
+            name = "libc";
+            packageId = "libc";
+            usesDefaultFeatures = false;
+          }
+        ];
+        features = {
+          "bindgen" = [ "dep:bindgen" ];
+          "direct-syscall" = [ "sc" ];
+          "overwrite" = [ "bindgen" ];
+          "sc" = [ "dep:sc" ];
+        };
+      };
       "is-terminal" = rec {
         crateName = "is-terminal";
         version = "0.4.16";
@@ -3807,7 +3849,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
           }
         ];
         features = {
@@ -4358,7 +4400,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             usesDefaultFeatures = false;
             features = [ "parsing" "printing" "clone-impls" "proc-macro" "full" "visit-mut" ];
           }
@@ -4418,9 +4460,9 @@ rec {
       };
       "postcard" = rec {
         crateName = "postcard";
-        version = "1.1.1";
+        version = "1.1.2";
         edition = "2021";
-        sha256 = "1a18yvgmjazphf6frnlnq4nnl6pp2l5qgi6qxnldpjbwyq0jc2hp";
+        sha256 = "0ynip6riqihal0kxnn9jh16qai70j13crbrwlx6g47gm41pfj7bc";
         authors = [
           "James Munns <james@onevariable.com>"
         ];
@@ -4460,9 +4502,10 @@ rec {
           "experimental-derive" = [ "postcard-derive" ];
           "heapless" = [ "dep:heapless" ];
           "heapless-cas" = [ "heapless" "dep:heapless" "heapless/cas" ];
-          "paste" = [ "dep:paste" ];
+          "nalgebra-v0_33" = [ "nalgebra_v0_33" ];
+          "nalgebra_v0_33" = [ "dep:nalgebra_v0_33" ];
           "postcard-derive" = [ "dep:postcard-derive" ];
-          "use-crc" = [ "crc" "paste" ];
+          "use-crc" = [ "crc" ];
           "use-defmt" = [ "defmt" ];
           "use-std" = [ "serde/std" "alloc" ];
         };
@@ -5223,7 +5266,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             usesDefaultFeatures = false;
             features = [ "clone-impls" "derive" "parsing" "printing" "proc-macro" ];
           }
@@ -5485,6 +5528,11 @@ rec {
             name = "thiserror";
             packageId = "thiserror 2.0.12";
           }
+          {
+            name = "tokio";
+            packageId = "tokio";
+            features = [ "fs" ];
+          }
         ];
         features = {
           "default" = [ "static_hosting" ];
@@ -5731,11 +5779,11 @@ rec {
         };
         resolvedDefaultFeatures = [ "clone-impls" "default" "derive" "extra-traits" "parsing" "printing" "proc-macro" "quote" ];
       };
-      "syn 2.0.103" = rec {
+      "syn 2.0.104" = rec {
         crateName = "syn";
-        version = "2.0.103";
+        version = "2.0.104";
         edition = "2021";
-        sha256 = "1s517h7zk5bwkfq0y08z7cig6cly3wxdmwhjyapxcvwx10q7wc74";
+        sha256 = "0h2s8cxh5dsh9h41dxnlzpifqqn59cqgm0kljawws61ljq2zgdhp";
         authors = [
           "David Tolnay <dtolnay@gmail.com>"
         ];
@@ -5798,7 +5846,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             usesDefaultFeatures = false;
             features = [ "derive" "parsing" "printing" "clone-impls" "visit" "extra-traits" ];
           }
@@ -5906,7 +5954,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
           }
         ];
 
@@ -5932,7 +5980,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
           }
         ];
 
@@ -6086,9 +6134,9 @@ rec {
       };
       "tokio" = rec {
         crateName = "tokio";
-        version = "1.45.1";
+        version = "1.46.1";
         edition = "2021";
-        sha256 = "0yb7h0mr0m0gfwdl1jir2k37gcrwhcib2kiyx9f95npi7sim3vvm";
+        sha256 = "05sxldy7kcgysnxyzz1h1l8j3d9mjyqfh7r48ni27gmg9lsa5hqc";
         authors = [
           "Tokio Contributors <team@tokio.rs>"
         ];
@@ -6104,6 +6152,17 @@ rec {
             optional = true;
           }
           {
+            name = "io-uring";
+            packageId = "io-uring";
+            usesDefaultFeatures = false;
+            target = { target, features }: ((target."tokio_uring" or false) && ("linux" == target."os" or null));
+          }
+          {
+            name = "libc";
+            packageId = "libc";
+            target = { target, features }: ((target."tokio_uring" or false) && ("linux" == target."os" or null));
+          }
+          {
             name = "libc";
             packageId = "libc";
             optional = true;
@@ -6114,6 +6173,13 @@ rec {
             packageId = "mio";
             optional = true;
             usesDefaultFeatures = false;
+          }
+          {
+            name = "mio";
+            packageId = "mio";
+            usesDefaultFeatures = false;
+            target = { target, features }: ((target."tokio_uring" or false) && ("linux" == target."os" or null));
+            features = [ "os-poll" "os-ext" ];
           }
           {
             name = "parking_lot";
@@ -6129,6 +6195,11 @@ rec {
             packageId = "signal-hook-registry";
             optional = true;
             target = { target, features }: (target."unix" or false);
+          }
+          {
+            name = "slab";
+            packageId = "slab";
+            target = { target, features }: ((target."tokio_uring" or false) && ("linux" == target."os" or null));
           }
           {
             name = "socket2";
@@ -6186,7 +6257,7 @@ rec {
           "tracing" = [ "dep:tracing" ];
           "windows-sys" = [ "dep:windows-sys" ];
         };
-        resolvedDefaultFeatures = [ "bytes" "default" "io-std" "io-util" "libc" "macros" "mio" "net" "parking_lot" "process" "rt" "rt-multi-thread" "signal" "signal-hook-registry" "socket2" "sync" "time" "tokio-macros" "windows-sys" ];
+        resolvedDefaultFeatures = [ "bytes" "default" "fs" "io-std" "io-util" "libc" "macros" "mio" "net" "parking_lot" "process" "rt" "rt-multi-thread" "signal" "signal-hook-registry" "socket2" "sync" "time" "tokio-macros" "windows-sys" ];
       };
       "tokio-macros" = rec {
         crateName = "tokio-macros";
@@ -6209,7 +6280,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "full" ];
           }
         ];
@@ -6520,7 +6591,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             usesDefaultFeatures = false;
             features = [ "full" "parsing" "printing" "visit-mut" "clone-impls" "extra-traits" "proc-macro" ];
           }
@@ -6941,7 +7012,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "full" ];
           }
           {
@@ -7042,7 +7113,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "visit" "visit-mut" "full" ];
           }
           {
@@ -8716,7 +8787,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "fold" ];
           }
           {
@@ -8784,7 +8855,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "full" ];
           }
         ];
@@ -8833,7 +8904,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "fold" ];
           }
           {
@@ -8946,7 +9017,7 @@ rec {
           }
           {
             name = "syn";
-            packageId = "syn 2.0.103";
+            packageId = "syn 2.0.104";
             features = [ "extra-traits" ];
           }
         ];
