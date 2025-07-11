@@ -67,6 +67,7 @@
       find ${./cytrans-web/www}//!(client*) ${cytrans-web-client}// -type f -print0 | xargs -0 -n 1 -P $NIX_BUILD_CORES ${brotlifyScriptInternal} $out
     '';
   in {
+    inherit fenixToolchain;
     devShells.default = pkgs.mkShell {
       buildInputs = [fenixToolchain wasm-bindgen-cli pkgs.crate2nix];
     };

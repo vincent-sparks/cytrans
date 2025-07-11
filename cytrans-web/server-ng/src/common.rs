@@ -161,33 +161,35 @@ pub fn browse(args: Data<crate::ArgsParsed>, browse_path: &str) -> Result<Browse
 }
 
 impl BrowseResult {
-    fn output_plain_text(self) -> BoxBody {
-        let mut v = Vec::new();
-
-        for element in self.0 {
-            match element {
-                Entry::Dir(name) => {
-                    v.extend(name.as_bytes());
-                    v.push(b'/');
-                    v.push(b'\n');
-                },
-                Entry::File(name) => {
-                    v.extend(name.as_bytes());
-                    v.push(b'\n');
+    fn into_strings(self) -> Vec<String> {
+        let mut res = Vec::new();
+        for elem in self.0 {
+            match elem {
+                Entry::File(s) => res.push(s),
+                Entry::Dir(mut s) => {
+                    s.push('/');
+                    res.push(s);
                 },
             }
         }
-
-        BoxBody::new(v)
+        res
+    }
+    fn output_plain_text(self) -> Vec<u8> {
+        self.into_strings().join("\n").into_bytes()
     }
 
-    fn output_json(self) -> BoxBody {
+    fn output_xffd_text(self) -> Vec<u8> {
+        self.into_strings().map(|x| x.into_bytes()).collect::<Vec<Vec<u8>>>().join(b"\xff")
+    }
+
+    fn output_json(self) -> Vec<u8> {
+        serde_json::to_vec(&self.0).expect("json generation failed")
     }
 }
 
 impl AcceptAwareResponse for BrowseResult {
-    type Body = BoxBody;
-    const FORMATS: &[(actix_web::mime::Mime, fn(Self) -> Self::Body)] = &[(mime::APPLICATION_JSON, Self::output_json), (mime::TEXT_PLAIN, Self::output_plain_text)];
+    type Body = Vec<u8>;
+    const FORMATS: &[(actix_web::mime::Mime, fn(Self) -> Self::Body)] = &[(mime::APPLICATION_JSON, Self::output_json), (mime::TEXT_PLAIN, Self::output_plain_text), ("text/xff-delimited".parse().unwrap(), Self::output_xffd_text)];
 }
 
 impl Responder for BrowseResult {
