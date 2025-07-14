@@ -97,6 +97,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(error::ErrorConversionMiddleware)
             .app_data(args.clone())
             .service(hello)
+            .service(api::browse)
             .default_service(web::to(host_static))
     })
     .bind(&*address)?

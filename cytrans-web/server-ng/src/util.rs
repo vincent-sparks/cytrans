@@ -7,7 +7,7 @@ use actix_web::{body::{BoxBody, EitherBody, MessageBody}, http::{header::{self, 
 // outlive 'static.
 pub trait AcceptAwareResponse: 'static {
     type Body: MessageBody = BoxBody;
-    const FORMATS: &[(Mime, fn(Self) -> Self::Body)];
+    fn formats() -> &'static [(Mime, fn(Self) -> Self::Body)];
     fn builder(&self) -> HttpResponseBuilder {
         HttpResponse::Ok()
     }
@@ -30,7 +30,7 @@ impl<T> Responder for AARWrapper<T> where T: AcceptAwareResponse {
         let preferences = accept_header.ranked();
         let mut builder = self.0.builder();
         builder.insert_header((header::VARY, "Accept"));
-        if let Some((mime, body_fn)) = T::FORMATS
+        if let Some((mime, body_fn)) = T::formats()
             .iter()
             .filter_map(|(mime, func)| mime_score(mime, &preferences).map(|score| (score, (mime, func))))
             .min_by_key(|(score, _)| *score) 
@@ -43,7 +43,7 @@ impl<T> Responder for AARWrapper<T> where T: AcceptAwareResponse {
                 .insert_header((header::VARY, "Accept"))
                 .insert_header(ContentType::plaintext())
                 .message_body(format!("No document matching your Accept: header could be found. Available MIME types: {}", 
-                        T::FORMATS.iter()
+                        T::formats().iter()
                         .map(|x| x.0.to_string())
                         .collect::<Vec<_>>()
                         .join(", ")))
@@ -96,11 +96,13 @@ pub(crate) mod test {
     impl AcceptAwareResponse for TestResponse {
         type Body = &'static str;
 
-        const FORMATS: &[(Mime, fn(Self) -> Self::Body)] = &[
-            (mime::TEXT_PLAIN_UTF_8, plain_response),
-            (mime::APPLICATION_JSON, json_response),
-            (mime::TEXT_HTML_UTF_8, html_response)
-        ];
+        fn formats() -> &'static [(&'static Mime, fn(Self) -> Self::Body)] {
+            &[
+                (&mime::TEXT_PLAIN_UTF_8, plain_response as _),
+                (&mime::APPLICATION_JSON, json_response as _),
+                (&mime::TEXT_HTML_UTF_8, html_response as _)
+            ]
+        }
 
         fn builder(&self) -> HttpResponseBuilder {
             HttpResponse::Ok()

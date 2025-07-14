@@ -1,7 +1,8 @@
-use crate::common::{self, BrowseError};
+use crate::common::{self, BrowseResult, BrowseError, PathParam};
 
-use actix_web::{body::BoxBody, get, web::{self, Data}, HttpResponse, Responder, ResponseError};
+use actix_web::{body::BoxBody, get, web::{self, Data, Query}, HttpResponse, Responder, ResponseError};
 
-async fn browse(path: web::Path<String>, data: Data<crate::ArgsParsed>) -> Result<BrowseResult, BrowseError> {
-    
+#[get("/api/browse")]
+pub async fn browse(Query(PathParam{path}): Query<PathParam>, data: Data<crate::Args>) -> Result<BrowseResult, BrowseError> {
+    crate::common::browse(data, &path)
 }

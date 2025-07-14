@@ -1,13 +1,19 @@
 use std::{borrow::Cow, path::{Component, Path, PathBuf}};
+use std::sync::LazyLock;
 
-use actix_web::{body::BoxBody, http::{header::{ContentType, TryIntoHeaderValue as _}, StatusCode}, mime, web::Data, HttpResponse, Responder, ResponseError};
+use actix_web::{body::BoxBody, http::{header::{ContentType, TryIntoHeaderValue as _}, StatusCode}, mime, web::Data, HttpResponse, Responder, ResponseError, mime::Mime};
 
 use crate::util::{AARWrapper, AcceptAwareResponse};
 
-#[derive(PartialOrd,Ord,PartialEq,Eq)]
+#[derive(PartialOrd,Ord,PartialEq,Eq,serde::Serialize)]
 enum Entry {
     Dir(String),
     File(String),
+}
+
+#[derive(serde::Deserialize)]
+pub struct PathParam {
+    pub path: String,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -113,8 +119,8 @@ pub fn sanitize_path(input_path: &str) -> Result<PathBuf, SanitizePathError> {
             Component::ParentDir => {
                 if !res.pop() {
                     // we could no-op in this case and still be compliant,
-                    // but for personal reasons i would prefer to show a cheeky message to anyone
-                    // who tries path traversal, so we return None here.
+                    // but for personal reasons i would prefer to show a cheeky message
+                    // to anyone who tries path traversal, so we return error here.
                     return Err(SanitizePathError::AttemptedRootTraversal);
                 };
             },
@@ -134,7 +140,7 @@ pub fn sanitize_path(input_path: &str) -> Result<PathBuf, SanitizePathError> {
 
 pub(crate) struct BrowseResult(Vec<Entry>);
 
-pub fn browse(args: Data<crate::ArgsParsed>, browse_path: &str) -> Result<BrowseResult, BrowseError> {
+pub fn browse(args: Data<crate::Args>, browse_path: &str) -> Result<BrowseResult, BrowseError> {
     let Some(input_path) = &args.input_dir else {
         return Err(BrowseError::BrowsingDisabled);
     };
@@ -179,7 +185,7 @@ impl BrowseResult {
     }
 
     fn output_xffd_text(self) -> Vec<u8> {
-        self.into_strings().map(|x| x.into_bytes()).collect::<Vec<Vec<u8>>>().join(b"\xff")
+        self.into_strings().into_iter().map(|x| x.into_bytes()).collect::<Vec<Vec<u8>>>().join(&b'\xff')
     }
 
     fn output_json(self) -> Vec<u8> {
@@ -187,9 +193,13 @@ impl BrowseResult {
     }
 }
 
+static BROWSE_RESULT_FORMATS: std::sync::LazyLock<[(actix_web::mime::Mime, fn(BrowseResult) -> Vec<u8>); 3]> = std::sync::LazyLock::new(|| [(mime::APPLICATION_JSON, BrowseResult::output_json as _), (mime::TEXT_PLAIN, BrowseResult::output_plain_text as _), ("text/xff-delimited".parse().unwrap(), BrowseResult::output_xffd_text as _)]);
+
 impl AcceptAwareResponse for BrowseResult {
     type Body = Vec<u8>;
-    const FORMATS: &[(actix_web::mime::Mime, fn(Self) -> Self::Body)] = &[(mime::APPLICATION_JSON, Self::output_json), (mime::TEXT_PLAIN, Self::output_plain_text), ("text/xff-delimited".parse().unwrap(), Self::output_xffd_text)];
+    fn formats() -> &'static [(actix_web::mime::Mime, fn(Self) -> Self::Body)] {
+        std::sync::LazyLock::force(&BROWSE_RESULT_FORMATS).as_slice()
+    }
 }
 
 impl Responder for BrowseResult {
