@@ -148,23 +148,34 @@ pub fn browse(args: Data<crate::Args>, browse_path: &str) -> Result<BrowseResult
     let p = input_path.join(p);
     let mut v = Vec::new();
     for entry in std::fs::read_dir(&p)? {
-        let entry = entry.map_err(BrowseError::IoError)?;
-        let name = entry.file_name();
-        let Some(name) = name.to_str() else {
-            continue;
-        };
-        if name.starts_with('.') {
-            continue;
-        }
-        let meta = std::fs::metadata(&p)?;
-        if meta.is_dir(){
-            v.push(Entry::Dir(name.into()));
-        } else if meta.is_file() && MOVIE_EXTS.iter().any(|ext| name.ends_with(ext)) {
-            v.push(Entry::File(name.into()));
+        match browse_inner(entry) {
+            Ok(Some(entry)) => v.push(entry),
+            Ok(None) => {},
+            Err(e) => {
+                log::error!("Encountered I/O error while iterating {}, failing silently: {}", p.display(), e);
+            }
         }
     }
     Ok(BrowseResult(v))
 }
+ fn browse_inner(entry: std::io::Result<DirEntry>) -> std::io::Result<Optiom<Entry>>() {
+     let entry = entry?;
+     let name = entry.file_name();
+     let Some(name) = name.to_str() else {
+         return Ok(None);
+     };
+     if name.starts_with('.') {
+         return Ok(None);
+     }
+     let meta = entry.meta()?;
+     if meta.is_dir(){
+         Ok(Some(Entry::Dir(name.into())))
+     } else if meta.is_file() && MOVIE_EXTS.iter().any(|ext| name.ends_with(ext)) {
+         Ok(Some(Entry::File(name.into())))
+     } else {
+         Ok(None)
+     }
+ }
 
 impl BrowseResult {
     fn into_strings(self) -> Vec<String> {
