@@ -1821,7 +1821,7 @@ rec {
           {
             name = "web-sys";
             packageId = "web-sys";
-            features = [ "Document" "Window" "Element" "Node" "HtmlCollection" ];
+            features = [ "Document" "Window" "Element" "Node" "HtmlCollection" "Request" "RequestInit" "RequestMode" "Response" "DomTokenList" ];
           }
         ];
 
@@ -7627,7 +7627,7 @@ rec {
           "default" = [ "std" ];
           "std" = [ "wasm-bindgen/std" "js-sys/std" ];
         };
-        resolvedDefaultFeatures = [ "Document" "Element" "Event" "EventTarget" "HtmlCollection" "MessageEvent" "Node" "Window" "Worker" "default" "std" ];
+        resolvedDefaultFeatures = [ "Document" "DomTokenList" "Element" "Event" "EventTarget" "HtmlCollection" "MessageEvent" "Node" "Request" "RequestInit" "RequestMode" "Response" "Window" "Worker" "default" "std" ];
       };
       "winapi-util" = rec {
         crateName = "winapi-util";
