@@ -15,4 +15,4 @@ wasm-bindgen-futures = "0.4.34"
 
 [dependencies.web-sys]
 version="0.3"
-features=["Document", "Window", "Element", "Node", "HtmlCollection"]
+features=["Document", "Window", "Element", "Node", "HtmlCollection", "Request", "RequestInit", "RequestMode", "Response", "DomTokenList"]
